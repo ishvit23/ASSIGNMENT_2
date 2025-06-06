@@ -32,10 +32,10 @@ pipeline {
         stage('Verify Flask App') {
             steps {
                 script {
-                    // Wait a bit for container to start
-                    bat 'timeout /t 10'
+                    // Wait ~10 seconds for container to start (ping localhost 11 times)
+                    bat 'ping -n 11 127.0.0.1 > nul'
 
-                    // Check if the Flask app is responding on port 5000
+                    // Check if Flask app is responding with HTTP 200
                     def response = bat(returnStdout: true, script: 'curl -s -o nul -w "%{http_code}" http://localhost:5000').trim()
 
                     if (response != '200') {
@@ -51,7 +51,7 @@ pipeline {
     post {
         always {
             script {
-                // Cleanup: stop and remove container
+                // Stop and remove container after build to clean up
                 bat '''
                     docker stop flask-app || echo Container not running
                     docker rm flask-app || echo Container not found
