@@ -21,13 +21,14 @@ pipeline {
         }
 
         stage('Stop & Remove Old Container') {
-    steps {
-        script {
-            bat 'docker stop flask-app || exit 0'
-            bat 'docker rm flask-app || exit 0'
+            steps {
+                script {
+                    // Stop container if exists, ignore errors if it doesn't
+                    bat "docker ps -q -f name=%CONTAINER_NAME% | findstr . && docker stop %CONTAINER_NAME% || echo Container not running"
+                    bat "docker ps -a -q -f name=%CONTAINER_NAME% | findstr . && docker rm %CONTAINER_NAME% || echo Container not found"
+                }
+            }
         }
-    }
-}
 
         stage('Run Docker Container') {
             steps {
