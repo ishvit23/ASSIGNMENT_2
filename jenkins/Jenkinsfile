@@ -16,24 +16,18 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                // Stop & remove previous container if running
-                bat 'docker stop flask-app || echo "Not running"'
-                bat 'docker rm flask-app || echo "Not found"'
-
-                // Run container on port 5000
-                bat 'docker run -d --name flask-app -p 5000:5000 flask-docker-app'
+                script {
+                    bat 'docker stop flask-app || echo "Not running"'
+                    bat 'docker rm flask-app || echo "Not found"'
+                    bat 'docker run -d --name flask-app -p 5000:5000 flask-docker-app'
+                }
             }
         }
 
         stage('Verify App Running') {
             steps {
-                // Wait a bit for the app to start
-                bat 'ping -n 6 127.0.0.1 > nul'
-
-                // Check if app returns HTTP 200
                 bat '''
-                for /f %%i in ('curl -s -o nul -w "%%{http_code}" http://localhost:5000') do set result=%%i
-                if NOT "%result%"=="200" exit /b 1
+                    curl -s http://localhost:5000 || (echo "App not responding!" && exit /b 1)
                 '''
             }
         }
@@ -41,7 +35,7 @@ pipeline {
 
     post {
         always {
-            // Cleanup after build
+            // Clean up container (optional)
             bat 'docker stop flask-app || echo "Not running"'
             bat 'docker rm flask-app || echo "Not found"'
         }
