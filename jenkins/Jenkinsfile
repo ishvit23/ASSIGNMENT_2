@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-               git branch: 'main', url: 'https://github.com/ishvit23/ASSIGNMENT_2.git'
+                git 'https://github.com/ishvit23/ASSIGNMENT_2.git'
             }
         }
 
@@ -23,10 +23,10 @@ pipeline {
         stage('Stop & Remove Old Container') {
             steps {
                 script {
-                    bat """
-                        docker stop %CONTAINER_NAME% || echo "No container to stop"
-                        docker rm %CONTAINER_NAME% || echo "No container to remove"
-                    """
+                    bat '''
+                        docker ps -q -f name=%CONTAINER_NAME% && docker stop %CONTAINER_NAME% || echo "No container running"
+                        docker ps -aq -f name=%CONTAINER_NAME% && docker rm %CONTAINER_NAME% || echo "No container to remove"
+                    '''
                 }
             }
         }
