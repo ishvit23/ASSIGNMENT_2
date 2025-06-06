@@ -28,5 +28,35 @@ pipeline {
                 }
             }
         }
+
+        stage('Verify Flask App') {
+            steps {
+                script {
+                    // Wait a bit for container to start
+                    bat 'timeout /t 10'
+
+                    // Check if the Flask app is responding on port 5000
+                    def response = bat(returnStdout: true, script: 'curl -s -o nul -w "%{http_code}" http://localhost:5000').trim()
+
+                    if (response != '200') {
+                        error("Flask app did not respond with HTTP 200 OK. Got: ${response}")
+                    } else {
+                        echo "Flask app is running and responding with HTTP 200 OK."
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                // Cleanup: stop and remove container
+                bat '''
+                    docker stop flask-app || echo Container not running
+                    docker rm flask-app || echo Container not found
+                '''
+            }
+        }
     }
 }
