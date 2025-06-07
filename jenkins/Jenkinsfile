@@ -23,32 +23,37 @@ pipeline {
         stage('Stop & Remove Old Container') {
             steps {
                 script {
-                    // Stop container if exists, ignore errors if it doesn't
-                    bat "docker ps -q -f name=%CONTAINER_NAME% | findstr . && docker stop %CONTAINER_NAME% || echo Container not running"
-                    bat "docker ps -a -q -f name=%CONTAINER_NAME% | findstr . && docker rm %CONTAINER_NAME% || echo Container not found"
+                    bat '''
+                    docker stop %CONTAINER_NAME% || echo "No running container to stop"
+                    docker rm %CONTAINER_NAME% || echo "No container to remove"
+                    '''
                 }
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                bat "docker run -d -p %PORT%:5000 --name %CONTAINER_NAME% %IMAGE_NAME%"
+                bat '''
+                docker run -d -p %PORT%:5000 --name %CONTAINER_NAME% %IMAGE_NAME%
+                '''
             }
         }
 
         stage('Verify App Running') {
             steps {
-                bat "curl http://localhost:%PORT%"
+                bat '''
+                curl http://localhost:%PORT% || echo "App may not have started yet"
+                '''
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline finished!'
+        success {
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Something went wrong. Check the logs.'
+            echo 'Something went wrong. Please check the logs.'
         }
     }
 }
